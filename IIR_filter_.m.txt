@@ -1,0 +1,103 @@
+%  Initializing the environment
+clc;
+clear all;
+close all;
+
+% Input the index number
+index=200687;   
+
+% Calculating A,B,C from index number
+A = mod(floor(index/100),10); 
+B = mod(floor(index/10),10);
+C = mod(index,10);
+D=mod(C,4);
+fprintf("A : %d\n",A)
+fprintf("B : %d\n",B)
+fprintf("C : %d\n",C)
+fprintf("D : %d\n",D)
+
+% Design Specifications
+Ap  =   0.1+(0.01* A);          % Maximum passband ripple 
+Aa  =   50 + B;                 % Minimum stopband attenuation 
+wp1 =   (C * 100) + 400;        % Lower passband edge 
+wp2 =   (C * 100) + 900;        % Upper passband edge 
+ws1 =   (C * 100) + 100;        % Lower stopband edge 
+ws2 =   (C * 100) + 1100;        % Upper stopband edge 
+ws  =    2*(( C * 100) + 1500) ; % Sampling frequency
+
+Ts=2*pi/ws; %sampling rate
+fs=1/Ts;
+
+wp=[wp1 wp2]; %passband range
+ws=[ws1 ws2];   %stopband range
+
+wp_warped=2*tan(wp*Ts/2)/Ts;    %warping
+ws_warped=2*tan(ws*Ts/2)/Ts;
+
+[n,Wp] = ellipord(wp_warped, ws_warped , Ap, Aa,"s");  %calculating order and passband range
+[num,den] = ellip(n,Ap,Aa,Wp,"bandpass","s");
+
+[dnum,dden]=bilinear(num,den,fs);   %apply binear transform
+
+[H,w]=freqz(dnum,dden,4001);
+Hdb=20*log10(abs(H));
+
+figure;
+plot([flip(-w); w], [flip(Hdb); Hdb])
+xlabel('\Omega (rad/sample)')
+ylabel('Magnitude (dB)')
+title('Magnitude response')
+ax = gca;
+ax.YLim = [-200 20];
+ax.XLim = [-pi pi];
+grid on;
+grid minor;
+
+figure;
+plot(w, Hdb);
+xlabel('\Omega (rad/sample)')
+ylabel('Magnitude (dB)')
+title('Magnitude response in passband')
+ax = gca;
+ax.YLim = [-0.2 0.2];
+ax.XLim = [wp1*Ts wp2*Ts];
+grid on;
+grid minor;
+
+
+
+................
+T=2*pi/4400; %sampling rate
+Wp=2*tan([1100 1600]*T/2)/T;    %warping
+Ws=2*tan([800 1800]*T/2)/T;
+
+[N,W] = ellipord(Wp, Ws , 0.1, 58,"s");  %calculating order and passband range
+[num,den] = ellip(N,0.1,58,W,"bandpass","s");
+
+[dnum,dden]=bilinear(num,den,1/T);   %apply binear transform
+
+[H,w]=freqz(dnum,dden,4001);
+Hdb=20*log10(abs(H));
+
+figure;
+plot([flip(-w); w], [flip(Hdb); Hdb])
+xlabel('\Omega (rad/sample)')
+ylabel('Magnitude (dB)')
+title('Magnitude response')
+ax = gca;
+ax.YLim = [-200 20];
+ax.XLim = [-pi pi];
+grid on;
+grid minor;
+
+figure;
+plot(w, Hdb);
+xlabel('\Omega (rad/sample)')
+ylabel('Magnitude (dB)')
+title('Magnitude response in passband')
+ax = gca;
+ax.YLim = [-0.2 0.2];
+ax.XLim = [wp1*T wp2*T];
+grid on;
+grid minor;
+
